@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+/* ====== THEME COLORS ====== */
+
+@theme {
+  --color-primary: #E6A57E;
+  --color-secondary: #8FAF9B;
+  --color-beige: #F5EDE6;
+  --color-dark: #1A1A1A;
+}
+
+/* ====== GLOBAL STYLES ====== */
+
+body {
+  background-color: white;
+  color: var(--color-dark);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.section-padding {
+  padding-top: 80px;
+  padding-bottom: 80px;
+}
+
+.form-input {
+  @apply w-full px-6 py-4 rounded-full border border-gray-300 outline-none transition;
+}
+
+.form-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(217, 145, 100, 0.15);
+}
