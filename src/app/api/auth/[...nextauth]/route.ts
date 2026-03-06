@@ -1,5 +1,8 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import connectDB from "@/lib/db";
+import User from "@/models/User";
+import { ObjectId } from "mongodb";
 
 const handler = NextAuth({
   providers: [
@@ -7,21 +10,34 @@ const handler = NextAuth({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        userId: { label: "User ID", type: "text" },
       },
       async authorize(credentials) {
-        // TEMP USER (later DB connect karenge)
-        if (
-          credentials?.email === "admin@gmail.com" &&
-          credentials?.password === "123456"
-        ) {
-          return {
-            id: "1",
-            name: "Admin User",
-            email: "admin@gmail.com",
-          };
+        if (!credentials?.email || !credentials?.userId) {
+          return null;
         }
-        return null;
+
+        try {
+          await connectDB();
+
+          const user = await User.findOne({
+            email: credentials.email.toLowerCase().trim(),
+            _id: new ObjectId(credentials.userId),
+          });
+
+          if (user) {
+            return {
+              id: user._id.toString(),
+              name: user.name || user.email.split("@")[0],
+              email: user.email,
+            };
+          }
+
+          return null;
+        } catch (error) {
+          console.error("Auth error:", error);
+          return null;
+        }
       },
     }),
   ],
