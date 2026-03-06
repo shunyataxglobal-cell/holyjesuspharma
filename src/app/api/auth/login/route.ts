@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
           id: user._id.toString(),
           email: user.email,
           name: user.name || user.email.split('@')[0],
+          role: user.role,
         },
       });
     }
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
         id: user._id.toString(),
         email: user.email,
         name: user.name || user.email.split('@')[0],
+        role: user.role,
       },
     });
   } catch (error) {

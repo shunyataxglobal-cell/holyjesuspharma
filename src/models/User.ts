@@ -4,6 +4,7 @@ export interface IUser extends Document {
   email: string;
   name?: string;
   password?: string;
+  role: string;
   verified: boolean;
   createdAt: Date;
 }
@@ -22,6 +23,12 @@ const UserSchema: Schema = new Schema({
   password: {
     type: String,
   },
+  role: {
+    type: String,
+    required: true,
+    default: 'user',
+    enum: ['user', 'admin'],
+  },
   verified: {
     type: Boolean,
     default: false,
@@ -30,8 +37,14 @@ const UserSchema: Schema = new Schema({
     type: Date,
     default: Date.now,
   },
+}, {
+  timestamps: false,
 });
 
-const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
+const User: Model<IUser> = mongoose.model<IUser>('User', UserSchema);
 
 export default User;

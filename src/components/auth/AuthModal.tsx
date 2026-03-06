@@ -19,6 +19,7 @@ export default function AuthModal({ isOpen, onClose }: Props) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [loginMethod, setLoginMethod] = useState<"password" | "otp">("password");
+  const [otpSent, setOtpSent] = useState(false);
   const [step, setStep] = useState<"email" | "otp" | "password">("email");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -30,7 +31,7 @@ export default function AuthModal({ isOpen, onClose }: Props) {
 
     try {
       if (loginMethod === "otp") {
-        if (!otp) {
+        if (!otpSent) {
           const res = await fetch("/api/auth/send-otp", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -38,6 +39,7 @@ export default function AuthModal({ isOpen, onClose }: Props) {
           });
 
           if (res.ok) {
+            setOtpSent(true);
             setError("OTP sent to your email");
           } else {
             const data = await res.json();
@@ -64,7 +66,7 @@ export default function AuthModal({ isOpen, onClose }: Props) {
 
           if (signInRes?.ok) {
             onClose();
-            router.push("/");
+            router.refresh();
           } else {
             setError("Login failed");
           }
@@ -89,7 +91,7 @@ export default function AuthModal({ isOpen, onClose }: Props) {
 
           if (signInRes?.ok) {
             onClose();
-            router.push("/");
+            router.refresh();
           } else {
             setError("Login failed");
           }
@@ -181,7 +183,7 @@ export default function AuthModal({ isOpen, onClose }: Props) {
 
         if (signInRes?.ok) {
           onClose();
-          router.push("/");
+          router.refresh();
         } else {
           setError("Signup failed");
         }
@@ -203,6 +205,7 @@ export default function AuthModal({ isOpen, onClose }: Props) {
     setError("");
     setStep("email");
     setLoginMethod("password");
+    setOtpSent(false);
   };
 
   return (
@@ -265,6 +268,7 @@ export default function AuthModal({ isOpen, onClose }: Props) {
                         setLoginMethod("password");
                         setPassword("");
                         setOtp("");
+                        setOtpSent(false);
                         setError("");
                       }}
                       className={`flex-1 py-2 rounded-full transition text-sm ${
@@ -281,6 +285,7 @@ export default function AuthModal({ isOpen, onClose }: Props) {
                         setLoginMethod("otp");
                         setPassword("");
                         setOtp("");
+                        setOtpSent(false);
                         setError("");
                       }}
                       className={`flex-1 py-2 rounded-full transition text-sm ${
@@ -312,17 +317,17 @@ export default function AuthModal({ isOpen, onClose }: Props) {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                       />
-                    ) : (
+                    ) : otpSent ? (
                       <input
                         type="text"
                         placeholder="Enter 6-digit OTP"
-                        required={!!otp}
+                        required
                         maxLength={6}
                         className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none text-center text-xl tracking-widest"
                         value={otp}
                         onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                       />
-                    )}
+                    ) : null}
 
                     <button
                       type="submit"
@@ -332,7 +337,7 @@ export default function AuthModal({ isOpen, onClose }: Props) {
                       {loading
                         ? "Processing..."
                         : loginMethod === "otp"
-                        ? otp
+                        ? otpSent
                           ? "Login"
                           : "Send OTP"
                         : "Login"}
@@ -434,19 +439,6 @@ export default function AuthModal({ isOpen, onClose }: Props) {
                     className="w-full py-4 bg-black text-white rounded-full hover:bg-[var(--color-primary)] transition cursor-pointer disabled:opacity-50"
                   >
                     {loading ? "Creating..." : "Create Account"}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep("otp");
-                      setPassword("");
-                      setConfirmPassword("");
-                      setError("");
-                    }}
-                    className="w-full py-4 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition cursor-pointer"
-                  >
-                    Back to OTP
                   </button>
                 </form>
               )}

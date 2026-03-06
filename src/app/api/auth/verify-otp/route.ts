@@ -53,20 +53,34 @@ export async function POST(request: NextRequest) {
       user = await User.create({
         email: normalizedEmail,
         verified: true,
+        role: 'user',
       });
     } else {
+      if (!user.role) {
+        user.role = 'user';
+      }
       user.verified = true;
       await user.save();
     }
 
     await OTP.findByIdAndDelete(otpRecord._id);
 
+    const updatedUser = await User.findById(user._id);
+
+    if (!updatedUser) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
       user: {
-        id: user._id.toString(),
-        email: user.email,
-        name: user.name || user.email.split('@')[0],
+        id: updatedUser._id.toString(),
+        email: updatedUser.email,
+        name: updatedUser.name || updatedUser.email.split('@')[0],
+        role: updatedUser.role || 'user',
       },
     });
   } catch (error) {

@@ -47,14 +47,18 @@ export async function POST(request: NextRequest) {
       email: normalizedEmail,
       password: hashedPassword,
       verified: true,
+      role: 'user',
     });
+
+    const savedUser = await User.findById(user._id);
 
     return NextResponse.json({
       success: true,
       user: {
-        id: user._id.toString(),
-        email: user.email,
-        name: user.name || user.email.split('@')[0],
+        id: savedUser._id.toString(),
+        email: savedUser.email,
+        name: savedUser.name || savedUser.email.split('@')[0],
+        role: savedUser.role || 'user',
       },
     });
   } catch (error: any) {
