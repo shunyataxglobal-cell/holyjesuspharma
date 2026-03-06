@@ -1,45 +1,48 @@
 import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import Credentials from "next-auth/providers/credentials";
+import connectDB from "@/lib/db";
+import User from "@/models/User";
+import { ObjectId } from "mongodb";
 
 const handler = NextAuth({
 
   providers: [
 
-    CredentialsProvider({
+    Credentials({
 
       name: "Admin Login",
 
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        userId: { label: "User ID", type: "text" },
       },
 
       async authorize(credentials) {
-
-        const adminEmail = process.env.ADMIN_EMAIL;
-        const adminPassword = process.env.ADMIN_PASSWORD;
-
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Missing credentials");
+        if (!credentials?.email || !credentials?.userId) {
+          return null;
         }
 
-        // Admin Login Check
-        if (
-          credentials.email === adminEmail &&
-          credentials.password === adminPassword
-        ) {
+        try {
+          await connectDB();
 
-          return {
-            id: "1",
-            name: "Admin",
-            email: adminEmail,
-            role: "admin",
-          };
+          const user = await User.findOne({
+            email: credentials.email.toLowerCase().trim(),
+            _id: new ObjectId(credentials.userId),
+          });
 
+          if (user) {
+            return {
+              id: user._id.toString(),
+              name: user.name || user.email.split("@")[0],
+              email: user.email,
+            };
+          }
+
+          return null;
+        } catch (error) {
+          console.error("Auth error:", error);
+          return null;
         }
-
-        return null;
-
       },
 
     }),
