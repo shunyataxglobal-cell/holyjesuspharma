@@ -9,25 +9,36 @@ import {
   Menu,
   X,
 } from "lucide-react";
+
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import AuthModal from "@/components/auth/AuthModal";
 import { useCart } from "@/context/CartContext";
 
+import { useSession, signOut } from "next-auth/react";
+
 export default function Header() {
+
   const [scrolled, setScrolled] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenu, setUserMenu] = useState(false);
 
   const pathname = usePathname();
   const router = useRouter();
 
   const { cartItems } = useCart();
+
+  const { data: session } = useSession();
+
   const cartCount = cartItems?.reduce(
     (total: number, item: any) => total + item.quantity,
     0
   );
+
+  const isAdmin =
+    session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   // Scroll Effect
   useEffect(() => {
@@ -76,7 +87,7 @@ export default function Header() {
         <div className="max-w-7xl mx-auto flex items-center justify-between px-9 lg:px-9 h-28">
 
           {/* LOGO */}
-          <Link href="/" className="flex items-center ">
+          <Link href="/" className="flex items-center">
             <Image
               src="/main logo.png"
               alt="Holy Jesus Pharma"
@@ -89,11 +100,14 @@ export default function Header() {
 
           {/* DESKTOP NAV */}
           <nav className="hidden lg:flex items-center gap-10 text-m font-medium tracking-wide">
+
             {navItems.map((item) => {
+
               const isActive = pathname === item.path;
 
               return (
                 <div key={item.name} className="relative group">
+
                   <Link
                     href={item.path}
                     className={`transition duration-300 ${
@@ -110,9 +124,11 @@ export default function Header() {
                       isActive ? "w-full" : "w-0 group-hover:w-full"
                     }`}
                   />
+
                 </div>
               );
             })}
+
           </nav>
 
           {/* RIGHT SIDE */}
@@ -121,25 +137,85 @@ export default function Header() {
             <Search className="w-5 h-5 hidden md:block cursor-pointer text-gray-600 hover:text-[var(--color-primary)] transition" />
 
             {/* USER ICON */}
-            <button onClick={() => setAuthOpen(true)}>
-              <User className="w-5 h-5 cursor-pointer text-gray-600 hover:text-[var(--color-primary)] transition" />
-            </button>
+
+            <div className="relative">
+
+              <button
+                onClick={() => {
+
+                  if (!session) {
+                    setAuthOpen(true);
+                  } else {
+                    setUserMenu(!userMenu);
+                  }
+
+                }}
+              >
+                <User className="w-5 h-5 cursor-pointer text-gray-600 hover:text-[var(--color-primary)] transition" />
+              </button>
+
+              {/* USER DROPDOWN */}
+
+              {userMenu && session && (
+
+                <div className="absolute right-0 mt-3 w-48 bg-white shadow-xl rounded-xl p-3 z-50">
+
+                  <p className="text-sm text-gray-500 mb-2">
+                    {session.user?.email}
+                  </p>
+
+                  <Link
+                    href="/profile"
+                    className="block px-3 py-2 hover:bg-gray-100 rounded-lg"
+                  >
+                    Edit Profile
+                  </Link>
+
+                  {isAdmin && (
+
+                    <Link
+                      href="/admin/dashboard"
+                      className="block px-3 py-2 hover:bg-gray-100 rounded-lg"
+                    >
+                      Admin Dashboard
+                    </Link>
+
+                  )}
+
+                  <button
+                    onClick={() => signOut()}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-lg"
+                  >
+                    Logout
+                  </button>
+
+                </div>
+
+              )}
+
+            </div>
 
             {/* CART */}
+
             <button
               onClick={() => router.push("/cart")}
               className="relative hidden md:block"
             >
+
               <ShoppingCart className="w-5 h-5 cursor-pointer text-gray-600 hover:text-[var(--color-primary)] transition" />
 
               {cartCount > 0 && (
+
                 <span className="absolute -top-2 -right-2 bg-[var(--color-primary)] text-white text-xs w-5 h-5 flex items-center justify-center rounded-full shadow">
                   {cartCount}
                 </span>
+
               )}
+
             </button>
 
             {/* CTA */}
+
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -149,27 +225,35 @@ export default function Header() {
               Consult Now
             </motion.button>
 
-            {/* MOBILE MENU BUTTON */}
+            {/* MOBILE MENU */}
+
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               className="lg:hidden"
             >
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
+
           </div>
         </div>
 
         {/* MOBILE NAV */}
+
         <AnimatePresence>
+
           {mobileOpen && (
+
             <motion.div
               initial={{ opacity: 0, y: -15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               className="lg:hidden bg-white shadow-xl"
             >
+
               <div className="flex flex-col px-6 py-6 gap-5">
+
                 {navItems.map((item) => (
+
                   <Link
                     key={item.name}
                     href={item.path}
@@ -177,6 +261,7 @@ export default function Header() {
                   >
                     {item.name}
                   </Link>
+
                 ))}
 
                 <button
@@ -188,17 +273,25 @@ export default function Header() {
                 >
                   Login / Sign Up
                 </button>
+
               </div>
+
             </motion.div>
+
           )}
+
         </AnimatePresence>
 
         {/* Accent Line */}
+
         <div className="h-[2px] bg-gradient-to-r from-transparent via-[var(--color-primary)]/40 to-transparent"></div>
+
       </motion.header>
 
       {/* AUTH MODAL */}
+
       <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
+
     </>
   );
 }

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
+
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+
 import Providers from "./providers";
 import { CartProvider } from "@/context/CartContext";
 
@@ -22,13 +24,21 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+
   return (
+
     <html lang="en">
+
       <body
         className={`${geistSans.variable} antialiased bg-white text-[var(--color-dark)]`}
       >
+
+        {/* Global Providers */}
         <Providers>
+
+          {/* Cart Context */}
           <CartProvider>
+
             <div className="flex flex-col min-h-screen">
 
               {/* Header */}
@@ -43,9 +53,14 @@ export default function RootLayout({
               <Footer />
 
             </div>
+
           </CartProvider>
+
         </Providers>
+
       </body>
+
     </html>
+
   );
 }

@@ -1,34 +1,85 @@
 import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
+import CredentialsProvider from "next-auth/providers/credentials";
 
 const handler = NextAuth({
+
   providers: [
-    Credentials({
-      name: "Credentials",
+
+    CredentialsProvider({
+
+      name: "Admin Login",
+
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
+
       async authorize(credentials) {
-        // TEMP USER (later DB connect karenge)
+
+        const adminEmail = process.env.ADMIN_EMAIL;
+        const adminPassword = process.env.ADMIN_PASSWORD;
+
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Missing credentials");
+        }
+
+        // Admin Login Check
         if (
-          credentials?.email === "admin@gmail.com" &&
-          credentials?.password === "123456"
+          credentials.email === adminEmail &&
+          credentials.password === adminPassword
         ) {
+
           return {
             id: "1",
-            name: "Admin User",
-            email: "admin@gmail.com",
+            name: "Admin",
+            email: adminEmail,
+            role: "admin",
           };
+
         }
+
         return null;
+
       },
+
     }),
+
   ],
+
   session: {
     strategy: "jwt",
   },
+
+  callbacks: {
+
+    async jwt({ token, user }) {
+
+      if (user) {
+        token.role = (user as any).role;
+      }
+
+      return token;
+
+    },
+
+    async session({ session, token }) {
+
+      if (session.user) {
+        (session.user as any).role = token.role;
+      }
+
+      return session;
+
+    },
+
+  },
+
+  pages: {
+    signIn: "/admin/login",
+  },
+
   secret: process.env.NEXTAUTH_SECRET,
+
 });
 
 export { handler as GET, handler as POST };

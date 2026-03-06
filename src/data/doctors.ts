@@ -418,4 +418,130 @@ export const doctors = [
      
     ],
   },
+
+  {
+    id: 16,
+    name: "Dr. Pavitra Shankar",
+    designation: "Associate Consultant Psychiatry Child and adolescent psychiatry",
+    hospital: "..",
+    image: "/images/doctors/Dr. Pavitra Shankar.png",
+    education:[
+      "MBBS from Lady Hardinge Medical College, Delhi -2020",
+      "MD (Psychiatry) from Lady Hardinge Medical College, Delhi - Jan 2025",
+      
+    ],
+    experience: [
+      "Dr. Pavitra Shankar is a compassionate psychiatrist with a special interest in women’s and children's mental health as well as community psychiatry. She completed her MBBS and MD in Psychiatry from Lady Hardinge Medical College, New Delhi. ",
+      "She believes in a holistic and patient-centred approach to mental health care, aiming to make it accessible, understandable, and stigma-free. Through her work, she strives to make mental health an open and essential conversation.",
+      "Dr. Saadgi Jagawat Memorial Award for Best Original Paper by a Female PG Student, DPS Annual Conference 2023",
+      "Prof. (Dr.) J.K. Trivedi Award for Rising Star in Psychiatry, 2024",
+
+    ],
+    interests: [
+      "Women’s mental health",
+      "General adult psychiatry",
+      "Child and adolescent psychiatry",
+      "De-addiction",
+      "Geriatric psychiatry",
+      "Positive psychology",
+      "Psychotherapy",
+      "Community mental health",
+     
+    ],
+  },
+
+   {
+    id: 17,
+    name: "Dr. Sneha Sharma",
+    designation: "Consultant Psychiatry and Drug Deaddiction",
+    hospital: "..",
+    image: "/images/doctors/Dr. Sneha Sharma.jpg",
+    education:[
+      "MBBS from Lady Hardinge Medical College - 2007 to 2012",
+      "MD (Psychiatry & Drug Deaddiction) from Lady Hardinge Medical College - 2014 to 2017",
+      
+    ],
+    experience: [
+      "Dr. Sneha Sharma is a young and compassionate psychiatrist and drug de-addiction specialist. She has deep knowledge in accessing the problems and giving the right direction to the patients. She is highly devoted and knows how to work with a child, teen and adolescent suffering from a range of problems, including PTSD (Post-traumatic stress disorder), major depressive disorder, anxiety, obsessive-compulsive disorder and drug and alcohol addiction. With over 7 years of expertise, she is proficient in crafting tailor-made solutions as per the patient’s needs. ",
+      "Founder of ReDockto - A mental and emotional well-being initiative. ",
+      "Cleared MRCPsych Paper A of the Royal College of Psychiatrists. ",
+      "Runner-up of the prestigious BHAGWAT AWARD instituted by the Indian Psychiatric Society at the 71st Annual Conference in 2019.",
+      "Author of multiple research articles in international and national journals. ",
+      "Conducted many conferences on mental health awareness in collaboration with Govt of Madhya Pradesh.",
+
+    ],
+    interests: [
+      "Child & adolescent psychiatry ",
+      "Deaddiction psychiatry",
+     
+    ],
+  },
+
+  {
+    id: 18,
+    name: "Dr. Hitesha Ramnani Rohira",
+    designation: "Consultant, IVF MBBS, DNB, FICOG",
+    hospital: "..",
+    image: "/images/doctors/Dr. Hitesha Ramnani Rohira.webp",
+    education:[
+      "Mahatma Gandhi Medical college, Jaipur",
+      "Mumbai Port trust Hospital, Wadala",
+      "Clinical Fellowship in Reproductive medicine",
+      
+    ],
+    experience: [
+      "10 Years",
+      "Dr. Rohira had completed her post-graduation from Mumbai Port trust hospital. In addition, she has been trained in reproductive medicines from Cradle IVF Gupte Hospital Pune.",
+
+
+    ],
+    interests: [
+      "PCOS , Poor responders, unexplained infertility",
+      "Oocyte retrieval, IUI, Embryo transfer, SSG",
+      "IUI",
+      "Oocyte retrieval",
+      "Embryo transfer",
+      "SSG",
+     
+    ],
+  },
+
+ {
+    id: 19,
+    name: "Dr. Shaunak Ajinkya",
+    designation: "Consultant, Psychiatrist MD, DPM, DIP, ADPSc, PGDMLS, CHt, FCLR, DHA",
+    hospital: "..",
+    image: "/images/doctors/Dr. Hitesha Ramnani Rohira.webp",
+    education:[
+      "MBBS, MGM Medical College and Hospital, Navi Mumbai",
+      "MD, Seth G.S. Medical College and KEM Hospital, Mumbai",
+      "Diploma in Psychological Medicine (DPM), College Of Physicians And Surgeons, Mumbai",
+      "Advanced Diploma in Psychological Sciences (PDPSC) - Institute of Health Care Administration, Chennai",
+      "Postgraduate Diploma in Medico Legal Systems (PGDMLS), Symbiosis Centre Of Health Care, Pune",
+      "Fellowship in Clinical Research (FCLR), Apollo Hospitals Education and Research Foundation, Hyderabad",
+      "Diploma in Hospital Administration (DHA), Apollo Hospitals Education and Research Foundation, Hyderabad",
+      "Clinical Hypnotherapist (CHt), International Medical and Dental Hypnotherapy Association, USA",
+      "Fellow of Indian Psychiatric Society",
+      "Fellow of Bombay Psychiatric Society",
+      "Fellow of Indian Association of Private Psychiatry",
+      
+    ],
+    experience: [
+      "23 Years",
+      "Consultant Psychiatrist for more than 23 yrs. Completed specialist training in MD Psychiatry from the prestigious Seth G.S. Medical College and K.E.M. Hospital Mumbai. Clinical Hypnotherapist for more than 9 years certified by the International Medical and Dental Hypnotherapy Association, USA.",
+
+
+    ],
+    interests: [
+      "Child and Adult Psychiatry, Neuropsychiatry, Deaddiction, Psychotherapy and Counselling, Clinical Hypnotherapy",
+      "Drug De-addiction OPD for Smoking, Alcohol or Drug dependence",
+      "Medications/Counselling for Disorders of Anxiety, Depression, Schizophrenia, Obsessive Compulsive Disorders, Tension Headaches, Eating Disorders (Anorexia/Bulimia), Sleep and Sexual Disorders, Trauma and Stress-related disorders.",
+      "Medications/Counselling for Neurodevelopmental Disorders like Autism, ADHD, Bed Wetting and emotional problems of Children and Adolescents",
+      "Medications/Counselling for Neurocognitive and Behavioural Disorders of Old Age",
+      "Stress Management Workshops for corporates",
+      
+     
+    ],
+  },
+
 ];
