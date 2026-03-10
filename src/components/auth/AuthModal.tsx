@@ -49,54 +49,30 @@ export default function AuthModal({ isOpen, onClose }: Props) {
           return;
         }
 
-        const res = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, otp }),
+        const result = await signIn("credentials", {
+          email,
+          otp,
+          redirect: false,
         });
 
-        const data = await res.json();
-
-        if (res.ok) {
-          const signInRes = await signIn("credentials", {
-            email: data.user.email,
-            userId: data.user.id,
-            redirect: false,
-          });
-
-          if (signInRes?.ok) {
-            onClose();
-            router.refresh();
-          } else {
-            setError("Login failed");
-          }
+        if (result?.ok) {
+          onClose();
+          router.refresh();
         } else {
-          setError(data.error || "Invalid OTP");
+          setError("Invalid OTP");
         }
       } else {
-        const res = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+        const result = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
         });
 
-        const data = await res.json();
-
-        if (res.ok) {
-          const signInRes = await signIn("credentials", {
-            email: data.user.email,
-            userId: data.user.id,
-            redirect: false,
-          });
-
-          if (signInRes?.ok) {
-            onClose();
-            router.refresh();
-          } else {
-            setError("Login failed");
-          }
+        if (result?.ok) {
+          onClose();
+          router.refresh();
         } else {
-          setError(data.error || "Invalid credentials");
+          setError("Invalid email or password");
         }
       }
     } catch (error) {
@@ -177,7 +153,7 @@ export default function AuthModal({ isOpen, onClose }: Props) {
       if (res.ok) {
         const signInRes = await signIn("credentials", {
           email: data.user.email,
-          userId: data.user.id,
+          password: password,
           redirect: false,
         });
 

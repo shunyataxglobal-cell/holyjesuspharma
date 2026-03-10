@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [loginMethod, setLoginMethod] = useState<"password" | "otp">("password");
+  const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -20,7 +21,7 @@ export default function LoginPage() {
 
     try {
       if (loginMethod === "otp") {
-        if (!otp) {
+        if (!otpSent) {
           const res = await fetch("/api/auth/send-otp", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -28,6 +29,7 @@ export default function LoginPage() {
           });
 
           if (res.ok) {
+            setOtpSent(true);
             setMessage("OTP sent to your email");
           } else {
             const data = await res.json();
@@ -37,52 +39,30 @@ export default function LoginPage() {
           return;
         }
 
-        const res = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, otp }),
+        const result = await signIn("credentials", {
+          email,
+          otp,
+          redirect: false,
         });
 
-        const data = await res.json();
-
-        if (res.ok) {
-          const signInRes = await signIn("credentials", {
-            email: data.user.email,
-            userId: data.user.id,
-            redirect: false,
-          });
-
-          if (signInRes?.ok) {
-            router.push("/");
-          } else {
-            setMessage("Login failed");
-          }
+        if (result?.ok) {
+          router.push("/");
+          router.refresh();
         } else {
-          setMessage(data.error || "Invalid OTP");
+          setMessage("Invalid OTP");
         }
       } else {
-        const res = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+        const result = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
         });
 
-        const data = await res.json();
-
-        if (res.ok) {
-          const signInRes = await signIn("credentials", {
-            email: data.user.email,
-            userId: data.user.id,
-            redirect: false,
-          });
-
-          if (signInRes?.ok) {
-            router.push("/");
-          } else {
-            setMessage("Login failed");
-          }
+        if (result?.ok) {
+          router.push("/");
+          router.refresh();
         } else {
-          setMessage(data.error || "Invalid credentials");
+          setMessage("Invalid email or password");
         }
       }
     } catch (error) {
@@ -106,6 +86,7 @@ export default function LoginPage() {
               setLoginMethod("password");
               setPassword("");
               setOtp("");
+              setOtpSent(false);
               setMessage("");
             }}
             className={`flex-1 py-2 rounded-full transition ${
@@ -122,6 +103,7 @@ export default function LoginPage() {
               setLoginMethod("otp");
               setPassword("");
               setOtp("");
+              setOtpSent(false);
               setMessage("");
             }}
             className={`flex-1 py-2 rounded-full transition ${
@@ -165,17 +147,17 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-          ) : (
+          ) : otpSent ? (
             <input
               type="text"
               placeholder="Enter 6-digit OTP"
-              required={!!otp}
+              required
               maxLength={6}
               className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none text-center text-2xl tracking-widest"
               value={otp}
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
             />
-          )}
+          ) : null}
 
           <button
             type="submit"
@@ -185,7 +167,7 @@ export default function LoginPage() {
             {loading
               ? "Processing..."
               : loginMethod === "otp"
-              ? otp
+              ? otpSent
                 ? "Login"
                 : "Send OTP"
               : "Login"}
