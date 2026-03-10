@@ -35,7 +35,7 @@ export default function ShippingPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
 
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = products.filter((product: any) => {
     return (
       (category === "All" || product.category === category) &&
       product.name.toLowerCase().includes(search.toLowerCase())
@@ -78,7 +78,7 @@ export default function ShippingPage() {
 
             {/* Category Filter */}
             <div className="flex gap-4 flex-wrap">
-              {["All", "General", "Diabetes", "Heart"].map((cat) => (
+              {["All", "General", "Diabetes", "Heart"].map((cat: string) => (
                 <button
                   key={cat}
                   onClick={() => setCategory(cat)}
@@ -97,7 +97,7 @@ export default function ShippingPage() {
 
           {/* ================= PRODUCTS GRID ================= */}
           <div className="grid md:grid-cols-3 gap-10">
-            {filteredProducts.map((product) => (
+            {filteredProducts.map((product: any) => (
               <motion.div
                 key={product.id}
                 whileHover={{ y: -8 }}

@@ -11,7 +11,7 @@ export default function CartPage() {
   const [coupon, setCoupon] = useState("");
 
   const subtotal = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
+    (acc: number, item: any) => acc + item.price * item.quantity,
     0
   );
 
@@ -51,7 +51,7 @@ export default function CartPage() {
             {/* LEFT SIDE - PRODUCTS */}
             <div className="lg:col-span-2 space-y-10">
 
-              {cartItems.map((item) => (
+              {cartItems.map((item: any) => (
                 <div
                   key={item.id}
                   className="flex flex-col sm:flex-row gap-8 bg-white rounded-3xl shadow-lg p-8"

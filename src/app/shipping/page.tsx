@@ -37,7 +37,7 @@ export default function ShippingPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = products.filter((product: any) => {
     const matchCategory =
       selectedCategory === "All" ||
       product.category === selectedCategory;
@@ -79,7 +79,7 @@ export default function ShippingPage() {
 
         {/* CATEGORY FILTER */}
         <div className="flex justify-center flex-wrap gap-4 mb-16">
-          {categories.map((cat) => (
+          {categories.map((cat: string) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
@@ -104,7 +104,7 @@ export default function ShippingPage() {
         ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
 
-  {filteredProducts.map((product) => (
+  {filteredProducts.map((product: any) => (
     <motion.div
       key={product.id}
       whileHover={{ y: -8 }}

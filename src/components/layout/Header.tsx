@@ -98,7 +98,7 @@ export default function Header() {
           {/* NAVIGATION */}
           <nav className="hidden lg:flex items-center gap-8 text-[15px] font-medium text-gray-700">
 
-            {navItems.map((item) => {
+            {navItems.map((item: any) => {
 
               const isActive = pathname === item.path;
 
@@ -250,7 +250,7 @@ export default function Header() {
 
               <div className="flex flex-col px-6 py-6 gap-4">
 
-                {navItems.map((item) => (
+                {navItems.map((item: any) => (
 
                   <Link
                     key={item.name}
