@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 
 import Providers from "./providers";
 import { CartProvider } from "@/context/CartContext";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,7 +39,7 @@ export default function RootLayout({
 
           {/* Cart Context */}
           <CartProvider>
-
+            <Toaster position="top-right" />
             <div className="flex flex-col min-h-screen">
 
               {/* Header */}

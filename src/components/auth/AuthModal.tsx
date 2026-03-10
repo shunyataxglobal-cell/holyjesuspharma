@@ -21,6 +21,8 @@ export default function AuthModal({ isOpen, onClose }: Props) {
   const [loginMethod, setLoginMethod] = useState<"password" | "otp">("password");
   const [otpSent, setOtpSent] = useState(false);
   const [step, setStep] = useState<"email" | "otp" | "password">("email");
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [forgotPasswordStep, setForgotPasswordStep] = useState<"email" | "otp" | "password">("email");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -173,6 +175,55 @@ export default function AuthModal({ isOpen, onClose }: Props) {
     }
   };
 
+  const handleSendForgotOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true); setError("");
+    try {
+      const res = await fetch("/api/auth/forgot-password/send-otp", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (res.ok) { setForgotPasswordStep("otp"); setError("Password Reset OTP sent to your email"); }
+      else { setError(data.error || "Failed to send OTP"); }
+    } catch { setError("Something went wrong"); }
+    finally { setLoading(false); }
+  };
+
+  const handleVerifyForgotOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true); setError("");
+    try {
+      const res = await fetch("/api/auth/verify-otp-signup", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp }),
+      });
+      const data = await res.json();
+      if (res.ok) { setForgotPasswordStep("password"); setError("OTP verified! Now set your new password"); }
+      else { setError(data.error || "Invalid OTP"); }
+    } catch { setError("Something went wrong"); }
+    finally { setLoading(false); }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if(password !== confirmPassword) { setError("Passwords do not match"); return; }
+    setLoading(true); setError("");
+    try {
+      const res = await fetch("/api/auth/forgot-password/reset", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, newPassword: password }),
+      });
+      const data = await res.json();
+      if (res.ok) { 
+        setError("Password reset successfully! Please login.");
+        setTimeout(() => resetForm(), 2000);
+      }
+      else { setError(data.error || "Password reset failed"); }
+    } catch { setError("Something went wrong"); }
+    finally { setLoading(false); }
+  };
+
   const resetForm = () => {
     setEmail("");
     setPassword("");
@@ -182,6 +233,8 @@ export default function AuthModal({ isOpen, onClose }: Props) {
     setStep("email");
     setLoginMethod("password");
     setOtpSent(false);
+    setIsForgotPassword(false);
+    setForgotPasswordStep("email");
   };
 
   return (
@@ -212,7 +265,9 @@ export default function AuthModal({ isOpen, onClose }: Props) {
               </button>
 
               <h2 className="text-2xl font-bold text-center mb-8">
-                {isLogin
+                {isForgotPassword
+                  ? forgotPasswordStep === "email" ? "Reset Password" : forgotPasswordStep === "otp" ? "Verify Reset OTP" : "Set New Password"
+                  : isLogin
                   ? "Login to Your Account"
                   : step === "email"
                   ? "Create an Account"
@@ -235,7 +290,34 @@ export default function AuthModal({ isOpen, onClose }: Props) {
                 </div>
               )}
 
-              {isLogin ? (
+              {isForgotPassword ? (
+                forgotPasswordStep === "email" ? (
+                  <form onSubmit={handleSendForgotOTP} className="space-y-5">
+                    <input type="email" placeholder="Email Address" required className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none" value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <button type="submit" disabled={loading} className="w-full py-4 bg-black text-white rounded-full hover:bg-[var(--color-primary)] transition cursor-pointer disabled:opacity-50">
+                      {loading ? "Sending..." : "Send Reset OTP"}
+                    </button>
+                    <button type="button" onClick={() => setIsForgotPassword(false)} className="w-full py-2 text-sm text-gray-500 hover:text-black">Back to Login</button>
+                  </form>
+                ) : forgotPasswordStep === "otp" ? (
+                  <form onSubmit={handleVerifyForgotOTP} className="space-y-5">
+                    <input type="email" value={email} disabled className="w-full px-6 py-4 rounded-full border border-gray-300 bg-gray-100 outline-none" />
+                    <input type="text" placeholder="Enter 6-digit OTP" required maxLength={6} className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none text-center text-xl tracking-widest" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))} />
+                    <button type="submit" disabled={loading} className="w-full py-4 bg-black text-white rounded-full hover:bg-[var(--color-primary)] transition cursor-pointer disabled:opacity-50">
+                      {loading ? "Verifying..." : "Verify OTP"}
+                    </button>
+                    <button type="button" onClick={() => setForgotPasswordStep("email")} className="w-full py-2 text-sm text-gray-500 hover:text-black">Change Email</button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleResetPassword} className="space-y-5">
+                    <input type="password" placeholder="New Password" required className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none" value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <input type="password" placeholder="Confirm New Password" required className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                    <button type="submit" disabled={loading} className="w-full py-4 bg-black text-white rounded-full hover:bg-[var(--color-primary)] transition cursor-pointer disabled:opacity-50">
+                      {loading ? "Resetting..." : "Reset Password"}
+                    </button>
+                  </form>
+                )
+              ) : isLogin ? (
                 <>
                   <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-full">
                     <button
@@ -285,14 +367,19 @@ export default function AuthModal({ isOpen, onClose }: Props) {
                     />
 
                     {loginMethod === "password" ? (
-                      <input
-                        type="password"
-                        placeholder="Password"
-                        required
-                        className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                      />
+                      <div>
+                        <input
+                          type="password"
+                          placeholder="Password"
+                          required
+                          className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <div className="flex justify-end mt-2">
+                          <button type="button" onClick={() => {setIsForgotPassword(true); setForgotPasswordStep('email');}} className="text-sm text-gray-500 hover:text-[var(--color-primary)]">Forgot Password?</button>
+                        </div>
+                      </div>
                     ) : otpSent ? (
                       <input
                         type="text"
@@ -366,18 +453,6 @@ export default function AuthModal({ isOpen, onClose }: Props) {
                     className="w-full py-4 bg-black text-white rounded-full hover:bg-[var(--color-primary)] transition cursor-pointer disabled:opacity-50"
                   >
                     {loading ? "Verifying..." : "Verify OTP"}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep("email");
-                      setOtp("");
-                      setError("");
-                    }}
-                    className="w-full py-4 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition cursor-pointer"
-                  >
-                    Change Email
                   </button>
                 </form>
               ) : (

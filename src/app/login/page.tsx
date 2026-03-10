@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,10 +31,10 @@ export default function LoginPage() {
 
           if (res.ok) {
             setOtpSent(true);
-            setMessage("OTP sent to your email");
+            toast.success("OTP sent to your email");
           } else {
             const data = await res.json();
-            setMessage(data.error || "Failed to send OTP");
+            toast.error(data.error || "Failed to send OTP");
           }
           setLoading(false);
           return;
@@ -46,10 +47,11 @@ export default function LoginPage() {
         });
 
         if (result?.ok) {
+          toast.success("Logged in successfully");
           router.push("/");
           router.refresh();
         } else {
-          setMessage("Invalid OTP");
+          toast.error(result?.error || "Invalid OTP");
         }
       } else {
         const result = await signIn("credentials", {
@@ -59,14 +61,15 @@ export default function LoginPage() {
         });
 
         if (result?.ok) {
+          toast.success("Logged in successfully");
           router.push("/");
           router.refresh();
         } else {
-          setMessage("Invalid email or password");
+          toast.error(result?.error || "Invalid email or password");
         }
       }
     } catch (error) {
-      setMessage("Something went wrong");
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -79,52 +82,40 @@ export default function LoginPage() {
           Login to Your Account
         </h2>
 
-        <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-full">
-          <button
-            type="button"
-            onClick={() => {
-              setLoginMethod("password");
-              setPassword("");
-              setOtp("");
-              setOtpSent(false);
-              setMessage("");
-            }}
-            className={`flex-1 py-2 rounded-full transition ${
-              loginMethod === "password"
-                ? "bg-black text-white"
-                : "text-gray-600"
-            }`}
-          >
-            Password
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setLoginMethod("otp");
-              setPassword("");
-              setOtp("");
-              setOtpSent(false);
-              setMessage("");
-            }}
-            className={`flex-1 py-2 rounded-full transition ${
-              loginMethod === "otp"
-                ? "bg-black text-white"
-                : "text-gray-600"
-            }`}
-          >
-            OTP
-          </button>
-        </div>
-
-        {message && (
-          <div
-            className={`mb-4 p-3 rounded-lg text-center ${
-              message.includes("sent") || message.includes("success")
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {message}
+        {!otpSent && (
+          <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-full">
+            <button
+              type="button"
+              onClick={() => {
+                setLoginMethod("password");
+                setPassword("");
+                setOtp("");
+                setOtpSent(false);
+              }}
+              className={`flex-1 py-2 rounded-full transition ${
+                loginMethod === "password"
+                  ? "bg-black text-white"
+                  : "text-gray-600"
+              }`}
+            >
+              Password
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginMethod("otp");
+                setPassword("");
+                setOtp("");
+                setOtpSent(false);
+              }}
+              className={`flex-1 py-2 rounded-full transition ${
+                loginMethod === "otp"
+                  ? "bg-black text-white"
+                  : "text-gray-600"
+              }`}
+            >
+              OTP
+            </button>
           </div>
         )}
 
@@ -133,7 +124,8 @@ export default function LoginPage() {
             type="email"
             placeholder="Email"
             required
-            className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none"
+            disabled={otpSent}
+            className={`w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none ${otpSent ? 'bg-gray-100 text-gray-500' : ''}`}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />

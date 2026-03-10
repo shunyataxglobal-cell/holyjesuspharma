@@ -56,6 +56,7 @@ export default function Header() {
 
   useEffect(() => {
     setMobileOpen(false);
+    setUserMenu(false);
   }, [pathname]);
 
   const navItems = [
@@ -98,7 +99,10 @@ export default function Header() {
           {/* NAVIGATION */}
           <nav className="hidden lg:flex items-center gap-8 text-[15px] font-medium text-gray-700">
 
-            {navItems.map((item: any) => {
+            {navItems.filter((item: any) => {
+               if (userRole === "doctor" && (item.name === "Consultation" || item.name === "Networks")) return false;
+               return true;
+            }).map((item: any) => {
 
               const isActive = pathname === item.path;
 
@@ -156,6 +160,7 @@ export default function Header() {
 
                     <Link
                       href="/dashboard/profile"
+                      onClick={() => setUserMenu(false)}
                       className="block px-3 py-2 hover:bg-gray-100 rounded-lg text-sm"
                     >
                       Profile
@@ -164,6 +169,7 @@ export default function Header() {
                     {isAdmin && (
                       <Link
                         href="/admin"
+                        onClick={() => setUserMenu(false)}
                         className="block px-3 py-2 hover:bg-gray-100 rounded-lg text-sm"
                       >
                         Admin Dashboard
@@ -173,7 +179,10 @@ export default function Header() {
                     <div className="border-t my-2"></div>
 
                     <button
-                      onClick={() => signOut()}
+                      onClick={() => {
+                        setUserMenu(false);
+                        signOut({ callbackUrl: "/login" });
+                      }}
                       className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-lg text-sm text-red-500 cursor-pointer"
                     >
                       Logout
@@ -250,7 +259,10 @@ export default function Header() {
 
               <div className="flex flex-col px-6 py-6 gap-4">
 
-                {navItems.map((item: any) => (
+                {navItems.filter((item: any) => {
+                   if(userRole === 'doctor' && (item.name === 'Consultation' || item.name === 'Networks')) return false;
+                   return true;
+                }).map((item: any) => (
 
                   <Link
                     key={item.name}

@@ -18,9 +18,29 @@ export default function ContactPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: any) => {
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    alert("Message Sent Successfully ✅");
+    setLoading(true);
+    setStatus("");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (res.ok) {
+        setStatus("success");
+        setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+      } else {
+        setStatus("error");
+      }
+    } catch {
+      setStatus("error");
+    }
+    setLoading(false);
   };
 
   return (
@@ -94,12 +114,24 @@ export default function ContactPage() {
               Send Us a Message
             </h2>
 
+            {status === "success" && (
+              <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-lg text-center font-medium">
+                Message Sent Successfully! We will contact you soon.
+              </div>
+            )}
+            {status === "error" && (
+              <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg text-center font-medium">
+                Failed to send message. Please try again.
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
 
               <div className="grid md:grid-cols-2 gap-6">
                 <input
                   type="text"
                   name="name"
+                  value={formData.name}
                   required
                   placeholder="Full Name"
                   onChange={handleChange}
@@ -109,6 +141,7 @@ export default function ContactPage() {
                 <input
                   type="email"
                   name="email"
+                  value={formData.email}
                   required
                   placeholder="Email Address"
                   onChange={handleChange}
@@ -119,6 +152,7 @@ export default function ContactPage() {
               <input
                 type="tel"
                 name="phone"
+                value={formData.phone}
                 required
                 placeholder="Phone Number"
                 onChange={handleChange}
@@ -128,6 +162,7 @@ export default function ContactPage() {
               <input
                 type="text"
                 name="subject"
+                value={formData.subject}
                 required
                 placeholder="Subject"
                 onChange={handleChange}
@@ -136,6 +171,7 @@ export default function ContactPage() {
 
               <textarea
                 name="message"
+                value={formData.message}
                 rows={5}
                 required
                 placeholder="Your Message"
@@ -145,9 +181,10 @@ export default function ContactPage() {
 
               <button
                 type="submit"
-                className="w-full py-4 bg-black text-white rounded-full hover:bg-[var(--color-primary)] transition text-lg shadow-lg cursor-pointer"
+                disabled={loading}
+                className="w-full py-4 bg-black text-white rounded-full hover:bg-[var(--color-primary)] transition text-lg shadow-lg cursor-pointer disabled:opacity-50"
               >
-                Send Message
+                {loading ? "Sending..." : "Send Message"}
               </button>
 
             </form>

@@ -2,40 +2,31 @@
 
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { motion } from "framer-motion";
-
-const products = [
-  {
-    id: 1,
-    name: "Paracetamol 500mg",
-    price: 120,
-    category: "General",
-    image: "/images/products/paracetamol.jpg",
-  },
-  {
-    id: 2,
-    name: "Diabetes Care Tablets",
-    price: 450,
-    category: "Diabetes",
-    image: "/images/products/diabetes.jpg",
-  },
-  {
-    id: 3,
-    name: "Blood Pressure Medicine",
-    price: 380,
-    category: "Heart",
-    image: "/images/products/bp.jpg",
-  },
-];
-
-const categories = ["All", "General", "Diabetes", "Heart"];
 
 export default function ShippingPage() {
   const { addToCart } = useCart();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/products")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.products) setProducts(data.products);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
+  const categories = ["All", ...Array.from(new Set(products.map((p: any) => p.category)))];
 
   const filteredProducts = products.filter((product: any) => {
     const matchCategory =
@@ -95,7 +86,11 @@ export default function ShippingPage() {
         </div>
 
         {/* PRODUCTS GRID */}
-        {filteredProducts.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-20">
+            <p className="text-gray-500 text-lg">Loading products...</p>
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-gray-500 text-lg">
               No medicines found.
@@ -106,7 +101,7 @@ export default function ShippingPage() {
 
   {filteredProducts.map((product: any) => (
     <motion.div
-      key={product.id}
+      key={product._id}
       whileHover={{ y: -8 }}
       className="bg-white rounded-2xl shadow-md hover:shadow-xl transition overflow-hidden flex flex-col"
     >
@@ -119,6 +114,7 @@ export default function ShippingPage() {
           width={180}
           height={180}
           className="object-contain"
+          unoptimized
         />
       </div>
 
@@ -134,8 +130,8 @@ export default function ShippingPage() {
         </p>
 
         <button
-          onClick={() => addToCart(product)}
-          className="mt-auto bg-black text-white py-3 rounded-full hover:bg-[var(--color-primary)] transition"
+          onClick={() => addToCart({ ...product, id: product._id })}
+          className="mt-auto bg-black text-white py-3 rounded-full hover:bg-[var(--color-primary)] transition cursor-pointer"
         >
           Add to Cart
         </button>
