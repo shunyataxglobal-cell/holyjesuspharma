@@ -12,6 +12,7 @@ export default function Checkout() {
   const { data: session, status } = useSession();
 
   const [loading, setLoading] = useState(false);
+  const [rzpReady, setRzpReady] = useState(false);
   const [address, setAddress] = useState({
     fullName: "",
     phone: "",
@@ -40,6 +41,11 @@ export default function Checkout() {
     setLoading(true);
 
     try {
+      if (!(window as any).Razorpay) {
+        alert("Payment system is still loading. Please try again in a moment.");
+        setLoading(false);
+        return;
+      }
       const orderData = {
         items: cart.map((i: any) => ({
           product: i.id || i._id,
@@ -66,7 +72,7 @@ export default function Checkout() {
       if (res.ok) {
         // Init Razorpay Checkkout
         const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+          key: data.keyId,
           amount: data.razorpayOrder.amount,
           currency: "INR",
           name: "Holy Jesus PharmaRX",
@@ -125,7 +131,7 @@ export default function Checkout() {
 
   return (
     <div className="max-w-7xl mx-auto py-32 px-6">
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" onLoad={() => setRzpReady(true)} />
       <h1 className="text-4xl font-bold mb-10">Checkout</h1>
 
       {cart.length === 0 ? (
@@ -185,10 +191,10 @@ export default function Checkout() {
             <button 
               type="submit" 
               form="checkout-form"
-              disabled={loading}
+              disabled={loading || !rzpReady}
               className="mt-8 w-full py-4 bg-black text-white rounded-full hover:bg-[var(--color-primary)] transition disabled:opacity-50 font-semibold cursor-pointer"
             >
-              {loading ? "Processing..." : "Pay with Razorpay"}
+              {loading ? "Processing..." : !rzpReady ? "Loading payment..." : "Pay with Razorpay"}
             </button>
           </div>
         </div>

@@ -226,7 +226,13 @@ export default function Header() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => router.push("/consultation")}
+                onClick={() => {
+                  if (!session) {
+                    router.push(`/login?callbackUrl=${encodeURIComponent("/consultation")}`);
+                    return;
+                  }
+                  router.push("/consultation");
+                }}
                 className="px-6 py-2 bg-black text-white rounded-full hover:bg-[var(--color-primary)] transition cursor-pointer"
               >
                 Consult Now

@@ -16,14 +16,25 @@ export default function UserDashboard() {
 
   // Profile States
   const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [mobile, setMobile] = useState("");
   const [image, setImage] = useState("");
+  const [address, setAddress] = useState({
+    street: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "India",
+  });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
 
   // Data States
   const [consultations, setConsultations] = useState<any[]>([]);
@@ -50,13 +61,51 @@ export default function UserDashboard() {
       if (res.ok) {
         const data = await res.json();
         setName(data.user.name || "");
+        setFirstName(data.user.firstName || "");
+        setLastName(data.user.lastName || "");
         setEmail(data.user.email || "");
         setPhone(data.user.phone || "");
+        setMobile(data.user.mobile || "");
         setImage(data.user.image || "");
+        setAddress(data.user.address || { street: "", city: "", state: "", zipCode: "", country: "India" });
       }
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+          );
+          const data = await res.json();
+          setAddress({
+            ...address,
+            city: data.city || data.locality || "",
+            state: data.principalSubdivision || "",
+            country: data.countryName || "India",
+            zipCode: data.postcode || "",
+          });
+          toast.success("Location detected and filled!");
+        } catch (error) {
+          toast.error("Failed to get location details");
+        }
+        setLocationLoading(false);
+      },
+      (error) => {
+        toast.error("Failed to get your location");
+        setLocationLoading(false);
+      }
+    );
   };
 
   const fetchData = async () => {
@@ -103,11 +152,12 @@ export default function UserDashboard() {
       const res = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, image }),
+        body: JSON.stringify({ name, firstName, lastName, phone, mobile, image, address }),
       });
       const data = await res.json();
       if (res.ok) {
         toast.success("Profile updated successfully!");
+        fetchProfile();
       } else {
         toast.error(data.error || "Failed to update profile");
       }
@@ -245,12 +295,77 @@ export default function UserDashboard() {
                         <input type="email" value={email} disabled className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500" />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black outline-none transition-colors" required />
+                        <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                        <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black outline-none transition-colors" />
                       </div>
-                      <div className="md:col-span-2">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                        <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black outline-none transition-colors" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black outline-none transition-colors" />
+                      </div>
+                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                         <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black outline-none transition-colors" placeholder="e.g. +91 9876543210" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
+                        <input type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black outline-none transition-colors" placeholder="e.g. 9876543210" />
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t">
+                      <div className="flex justify-between items-center mb-4">
+                        <label className="block text-sm font-medium text-gray-700">Address</label>
+                        <button
+                          type="button"
+                          onClick={handleGetLocation}
+                          disabled={locationLoading}
+                          className="text-xs px-4 py-2 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition disabled:opacity-50"
+                        >
+                          {locationLoading ? "Detecting..." : "📍 Use Current Location"}
+                        </button>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <input
+                            type="text"
+                            value={address.street}
+                            onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                            placeholder="Street Address"
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black outline-none transition-colors"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          value={address.city}
+                          onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                          placeholder="City"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black outline-none transition-colors"
+                        />
+                        <input
+                          type="text"
+                          value={address.state}
+                          onChange={(e) => setAddress({ ...address, state: e.target.value })}
+                          placeholder="State"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black outline-none transition-colors"
+                        />
+                        <input
+                          type="text"
+                          value={address.zipCode}
+                          onChange={(e) => setAddress({ ...address, zipCode: e.target.value })}
+                          placeholder="Zip Code"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black outline-none transition-colors"
+                        />
+                        <input
+                          type="text"
+                          value={address.country}
+                          onChange={(e) => setAddress({ ...address, country: e.target.value })}
+                          placeholder="Country"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black outline-none transition-colors"
+                        />
                       </div>
                     </div>
 

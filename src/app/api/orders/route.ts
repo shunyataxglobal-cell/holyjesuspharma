@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       status: 'processing'
     });
 
-    return NextResponse.json({ success: true, order: newOrder, razorpayOrder: rzpOrder });
+    return NextResponse.json({ success: true, keyId: process.env.RAZORPAY_KEY_ID, order: newOrder, razorpayOrder: rzpOrder });
   } catch (error) {
     console.error('Create Order error:', error);
     return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });

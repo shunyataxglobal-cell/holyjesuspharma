@@ -5,9 +5,13 @@ import { useCart } from "@/context/CartContext";
 import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function ShippingPage() {
   const { addToCart } = useCart();
+  const { status } = useSession();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [products, setProducts] = useState<any[]>([]);
@@ -130,7 +134,16 @@ export default function ShippingPage() {
         </p>
 
         <button
-          onClick={() => addToCart({ ...product, id: product._id })}
+          onClick={() => {
+            const item = { ...product, id: product._id };
+            if (status !== "authenticated") {
+              localStorage.setItem("pendingAddToCart", JSON.stringify({ item, goCheckout: true }));
+              router.push(`/login?callbackUrl=${encodeURIComponent("/shipping")}`);
+              return;
+            }
+            addToCart(item);
+            router.push("/checkout");
+          }}
           className="mt-auto bg-black text-white py-3 rounded-full hover:bg-[var(--color-primary)] transition cursor-pointer"
         >
           Add to Cart

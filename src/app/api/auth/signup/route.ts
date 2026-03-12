@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const { email, password, confirmPassword } = await request.json();
+    const { email, password, confirmPassword, firstName, lastName, mobile, address } = await request.json();
 
     if (!email || !email.includes('@')) {
       return NextResponse.json(
@@ -46,6 +46,11 @@ export async function POST(request: NextRequest) {
     const user = await User.create({
       email: normalizedEmail,
       password: hashedPassword,
+      firstName,
+      lastName,
+      name: firstName && lastName ? `${firstName} ${lastName}` : undefined,
+      mobile,
+      address: address || { country: 'India' },
       verified: true,
       role: 'user',
     });

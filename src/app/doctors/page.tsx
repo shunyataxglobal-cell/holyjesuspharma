@@ -3,10 +3,14 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Star } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function DoctorsPage() {
   const [doctors, setDoctors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
   useEffect(() => {
     fetch("/api/doctors")
@@ -43,7 +47,6 @@ export default function DoctorsPage() {
                     alt={doc.name} 
                     fill 
                     className="object-cover group-hover:scale-110 transition duration-500" 
-                    unoptimized
                   />
                 </div>
                 <div className="p-8">
@@ -64,9 +67,18 @@ export default function DoctorsPage() {
                     )}
                   </div>
                   
-                  <a href="/consultation" className="block text-center w-full py-3 bg-black text-white rounded-full hover:bg-[var(--color-primary)] transition font-semibold cursor-pointer">
-                    Book Consultation
-                  </a>
+                  {status === "authenticated" ? (
+                    <a href="/consultation" className="block text-center w-full py-3 bg-black text-white rounded-full hover:bg-[var(--color-primary)] transition font-semibold cursor-pointer">
+                      Book Consultation
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() => router.push(`/login?callbackUrl=${encodeURIComponent("/consultation")}`)}
+                      className="block text-center w-full py-3 bg-black text-white rounded-full hover:bg-[var(--color-primary)] transition font-semibold cursor-pointer"
+                    >
+                      Consult a Doctor
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

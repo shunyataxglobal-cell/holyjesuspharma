@@ -5,6 +5,8 @@ import { useCart } from "@/context/CartContext";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Search } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const products = [
   {
@@ -32,6 +34,8 @@ const products = [
 
 export default function ShippingPage() {
   const { addToCart } = useCart();
+  const { status } = useSession();
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
 
@@ -126,7 +130,15 @@ export default function ShippingPage() {
                 {/* Buttons */}
                 <div className="flex gap-4 mt-6">
                   <button
-                    onClick={() => addToCart(product)}
+                    onClick={() => {
+                      if (status !== "authenticated") {
+                        localStorage.setItem("pendingAddToCart", JSON.stringify({ item: product, goCheckout: true }));
+                        router.push(`/login?callbackUrl=${encodeURIComponent(`/shipping/${product.id}`)}`);
+                        return;
+                      }
+                      addToCart(product);
+                      router.push("/checkout");
+                    }}
                     className="flex-1 bg-black text-white py-3 rounded-full hover:bg-[var(--color-primary)] transition"
                   >
                     Add to Cart

@@ -31,12 +31,20 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { name, phone, image } = await request.json();
+    const { name, firstName, lastName, phone, mobile, image, address } = await request.json();
 
     await connectDB();
+    const updateData: any = { phone, image };
+    if (name) updateData.name = name;
+    if (firstName) updateData.firstName = firstName;
+    if (lastName) updateData.lastName = lastName;
+    if (mobile) updateData.mobile = mobile;
+    if (address) updateData.address = address;
+    if (firstName && lastName && !name) updateData.name = `${firstName} ${lastName}`;
+
     const user = await User.findOneAndUpdate(
       { email: session.user.email },
-      { name, phone, image },
+      updateData,
       { new: true }
     ).select('-password');
 

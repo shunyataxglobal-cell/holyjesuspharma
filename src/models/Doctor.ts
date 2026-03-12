@@ -6,6 +6,7 @@ export interface IDoctor extends Document {
   designation: string;
   hospital: string;
   image: string;
+  cloudinaryPublicId?: string;
   education: string[];
   experience: string[];
   interests: string[];
@@ -18,6 +19,7 @@ const DoctorSchema: Schema = new Schema({
   designation: { type: String, required: true },
   hospital: { type: String, required: true },
   image: { type: String, required: true },
+  cloudinaryPublicId: { type: String },
   education: [{ type: String }],
   experience: [{ type: String }],
   interests: [{ type: String }],

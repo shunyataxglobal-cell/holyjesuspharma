@@ -10,9 +10,20 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [otp, setOtp] = useState("");
-  const [step, setStep] = useState<"email" | "otp" | "password">("email");
+  const [step, setStep] = useState<"email" | "otp" | "password" | "details">("email");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [address, setAddress] = useState({
+    street: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "India",
+  });
+  const [locationLoading, setLocationLoading] = useState(false);
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,8 +79,30 @@ export default function SignupPage() {
     }
   };
 
+  const validatePassword = (pwd: string): string => {
+    if (!pwd || pwd.length < 8) {
+      return "Password must be at least 8 characters";
+    }
+    if (!/^(?=.*[a-zA-Z])(?=.*[0-9])/.test(pwd)) {
+      return "Password must contain both letters and numbers";
+    }
+    return "";
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const pwdError = validatePassword(password);
+    if (pwdError) {
+      setError(pwdError);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -83,17 +116,8 @@ export default function SignupPage() {
       const data = await res.json();
 
       if (res.ok) {
-        const signInRes = await signIn("credentials", {
-          email: data.user.email,
-          userId: data.user.id,
-          redirect: false,
-        });
-
-        if (signInRes?.ok) {
-          router.push("/");
-        } else {
-          setError("Signup failed");
-        }
+        setStep("details");
+        setError("Password set! Now complete your profile");
       } else {
         setError(data.error || "Signup failed");
       }
@@ -104,6 +128,80 @@ export default function SignupPage() {
     }
   };
 
+  const handleCompleteProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firstName || !lastName || !mobile || !address.city || !address.state) {
+      setError("Please fill all required fields");
+      return;
+    }
+    setLoading(true);
+    setError("");
+
+    try {
+      const signInRes = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (signInRes?.ok) {
+        const res = await fetch("/api/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ firstName, lastName, mobile, address }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          router.push("/");
+        } else {
+          setError(data.error || "Failed to save profile");
+        }
+      } else {
+        setError("Login failed. Please try again.");
+      }
+    } catch (error) {
+      setError("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your browser");
+      return;
+    }
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+          );
+          const data = await res.json();
+          setAddress({
+            ...address,
+            city: data.city || data.locality || "",
+            state: data.principalSubdivision || "",
+            country: data.countryName || "India",
+            zipCode: data.postcode || "",
+          });
+          setError("Location detected and filled!");
+        } catch (error) {
+          setError("Failed to get location details");
+        }
+        setLocationLoading(false);
+      },
+      (error) => {
+        setError("Failed to get your location");
+        setLocationLoading(false);
+      }
+    );
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--color-beige)]">
       <div className="bg-white p-12 rounded-3xl shadow-2xl w-full max-w-md">
@@ -112,7 +210,9 @@ export default function SignupPage() {
             ? "Create Your Account"
             : step === "otp"
             ? "Verify OTP"
-            : "Set Password"}
+            : step === "password"
+            ? "Set Password"
+            : "Complete Your Profile"}
         </h2>
 
         {error && (
@@ -204,23 +304,49 @@ export default function SignupPage() {
               value={email}
             />
 
-            <input
-              type="password"
-              placeholder="Password"
-              required
-              className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div>
+              <input
+                type="password"
+                placeholder="Password (min 8 chars, alphanumeric)"
+                required
+                className={`w-full px-6 py-4 rounded-full border outline-none ${
+                  password && validatePassword(password) ? "border-red-500" : password ? "border-green-500" : "border-gray-300 focus:border-[var(--color-primary)]"
+                }`}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error && error.includes("Password")) setError("");
+                }}
+              />
+              {password && validatePassword(password) && (
+                <p className="text-red-500 text-sm mt-1 ml-2">{validatePassword(password)}</p>
+              )}
+              {password && !validatePassword(password) && (
+                <p className="text-green-500 text-sm mt-1 ml-2">✓ Password is valid</p>
+              )}
+            </div>
 
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              required
-              className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
+            <div>
+              <input
+                type="password"
+                placeholder="Confirm Password"
+                required
+                className={`w-full px-6 py-4 rounded-full border outline-none ${
+                  confirmPassword && password !== confirmPassword ? "border-red-500" : confirmPassword && password === confirmPassword ? "border-green-500" : "border-gray-300 focus:border-[var(--color-primary)]"
+                }`}
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (error && error.includes("match")) setError("");
+                }}
+              />
+              {confirmPassword && password !== confirmPassword && (
+                <p className="text-red-500 text-sm mt-1 ml-2">Passwords do not match</p>
+              )}
+              {confirmPassword && password === confirmPassword && password && (
+                <p className="text-green-500 text-sm mt-1 ml-2">✓ Passwords match</p>
+              )}
+            </div>
 
             <button
               type="submit"
@@ -241,6 +367,126 @@ export default function SignupPage() {
               className="w-full py-4 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition cursor-pointer"
             >
               Back to OTP
+            </button>
+          </form>
+        )}
+
+        {step === "details" && (
+          <form onSubmit={handleCompleteProfile} className="space-y-6">
+            <input
+              type="email"
+              placeholder="Email"
+              required
+              disabled
+              className="w-full px-6 py-4 rounded-full border border-gray-300 bg-gray-100 outline-none"
+              value={email}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="First Name"
+                required
+                className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+              <input
+                type="text"
+                placeholder="Last Name"
+                required
+                className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+            </div>
+
+            <input
+              type="tel"
+              placeholder="Mobile Number"
+              required
+              className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none"
+              value={mobile}
+              onChange={(e) => setMobile(e.target.value)}
+            />
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-medium">Address</label>
+                <button
+                  type="button"
+                  onClick={handleGetLocation}
+                  disabled={locationLoading}
+                  className="text-xs px-4 py-2 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition disabled:opacity-50"
+                >
+                  {locationLoading ? "Detecting..." : "📍 Use Current Location"}
+                </button>
+              </div>
+              <input
+                type="text"
+                placeholder="Street Address"
+                className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none"
+                value={address.street}
+                onChange={(e) => setAddress({ ...address, street: e.target.value })}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="City"
+                  required
+                  className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none"
+                  value={address.city}
+                  onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="State"
+                  required
+                  className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none"
+                  value={address.state}
+                  onChange={(e) => setAddress({ ...address, state: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Zip Code"
+                  className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none"
+                  value={address.zipCode}
+                  onChange={(e) => setAddress({ ...address, zipCode: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="Country"
+                  required
+                  className="w-full px-6 py-4 rounded-full border border-gray-300 focus:border-[var(--color-primary)] outline-none"
+                  value={address.country}
+                  onChange={(e) => setAddress({ ...address, country: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-black text-white rounded-full hover:bg-[var(--color-primary)] transition cursor-pointer disabled:opacity-50"
+            >
+              {loading ? "Completing..." : "Complete Signup"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setStep("password");
+                setFirstName("");
+                setLastName("");
+                setMobile("");
+                setAddress({ street: "", city: "", state: "", zipCode: "", country: "India" });
+                setError("");
+              }}
+              className="w-full py-4 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition cursor-pointer"
+            >
+              Back to Password
             </button>
           </form>
         )}

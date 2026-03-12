@@ -4,9 +4,11 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import { useCart } from "@/context/CartContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { addToCart } = useCart();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
@@ -48,7 +50,22 @@ export default function LoginPage() {
 
         if (result?.ok) {
           toast.success("Logged in successfully");
-          router.push("/");
+          try {
+            const pending = localStorage.getItem("pendingAddToCart");
+            if (pending) {
+              const { item, goCheckout } = JSON.parse(pending);
+              if (item?.id) addToCart(item);
+              localStorage.removeItem("pendingAddToCart");
+              if (goCheckout) {
+                router.push("/checkout");
+                router.refresh();
+                return;
+              }
+            }
+          } catch {}
+
+          const callbackUrl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("callbackUrl") : null;
+          router.push(callbackUrl || "/");
           router.refresh();
         } else {
           toast.error(result?.error || "Invalid OTP");
@@ -62,7 +79,22 @@ export default function LoginPage() {
 
         if (result?.ok) {
           toast.success("Logged in successfully");
-          router.push("/");
+          try {
+            const pending = localStorage.getItem("pendingAddToCart");
+            if (pending) {
+              const { item, goCheckout } = JSON.parse(pending);
+              if (item?.id) addToCart(item);
+              localStorage.removeItem("pendingAddToCart");
+              if (goCheckout) {
+                router.push("/checkout");
+                router.refresh();
+                return;
+              }
+            }
+          } catch {}
+
+          const callbackUrl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("callbackUrl") : null;
+          router.push(callbackUrl || "/");
           router.refresh();
         } else {
           toast.error(result?.error || "Invalid email or password");

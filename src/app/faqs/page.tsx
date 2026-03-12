@@ -1,57 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Search } from "lucide-react";
-
-const categories = [
-  "General",
-  "Consultation",
-  "Security",
-  "Doctors",
-  "Payments",
-];
-
-const faqData = [
-  {
-    category: "General",
-    question: "What services do you provide?",
-    answer:
-      "We provide secure online doctor consultations, prescription services, and follow-up care.",
-  },
-  {
-    category: "Consultation",
-    question: "How does online consultation work?",
-    answer:
-      "You submit your medical details, choose consultation type, and connect securely with a licensed doctor.",
-  },
-  {
-    category: "Security",
-    question: "Is my medical data safe?",
-    answer:
-      "Yes, all data is encrypted and handled under strict privacy standards.",
-  },
-  {
-    category: "Doctors",
-    question: "Are your doctors certified?",
-    answer:
-      "Yes, all doctors in our network are licensed and verified professionals.",
-  },
-  {
-    category: "Payments",
-    question: "What payment methods do you accept?",
-    answer:
-      "We accept secure online payments including cards and digital payment options.",
-  },
-];
 
 export default function FAQPage() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("General");
   const [searchTerm, setSearchTerm] = useState("");
+  const [faqs, setFaqs] = useState<any[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredFaqs = faqData.filter(
+  useEffect(() => {
+    fetch("/api/faqs")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.faqs) {
+          setFaqs(data.faqs);
+          const cats = Array.from(new Set(data.faqs.map((f: any) => f.category))) as string[];
+          setCategories(cats.length > 0 ? cats : ["General"]);
+          if (cats.length > 0) setSelectedCategory(cats[0]);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
+  const filteredFaqs = faqs.filter(
     (faq) =>
       faq.category === selectedCategory &&
       faq.question.toLowerCase().includes(searchTerm.toLowerCase())
@@ -116,49 +96,50 @@ export default function FAQPage() {
 
           {/* RIGHT FAQ LIST */}
           <div className="lg:col-span-3 space-y-6">
-
-            {filteredFaqs.length === 0 && (
+            {loading ? (
+              <p className="text-gray-500">Loading FAQs...</p>
+            ) : filteredFaqs.length === 0 ? (
               <p className="text-gray-500">
                 No questions found for this search.
               </p>
-            )}
-
-            {filteredFaqs.map((faq, index) => (
-              <div
-                key={index}
-                className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
-              >
-                <button
-                  onClick={() =>
-                    setActiveIndex(activeIndex === index ? null : index)
-                  }
-                  className="w-full flex justify-between items-center text-left"
+            ) : (
+              filteredFaqs.map((faq, index) => (
+                <div
+                  key={faq._id || index}
+                  className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6"
                 >
-                  <span className="font-semibold text-lg">
-                    {faq.question}
-                  </span>
-                  <span className="text-2xl font-bold">
-                    {activeIndex === index ? "−" : "+"}
-                  </span>
-                </button>
+                  <button
+                    onClick={() =>
+                      setActiveIndex(activeIndex === index ? null : index)
+                    }
+                    className="w-full flex justify-between items-center text-left"
+                  >
+                    <span className="font-semibold text-lg">
+                      {faq.question}
+                    </span>
+                    <span className="text-2xl font-bold">
+                      {activeIndex === index ? "−" : "+"}
+                    </span>
+                  </button>
 
-                <AnimatePresence>
-                  {activeIndex === index && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="overflow-hidden"
-                    >
-                      <p className="mt-4 text-gray-600">
-                        {faq.answer}
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ))}
+                  <AnimatePresence>
+                    {activeIndex === index && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        <p className="mt-4 text-gray-600">
+                          {faq.answer}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))
+            )}
 
           </div>
         </div>

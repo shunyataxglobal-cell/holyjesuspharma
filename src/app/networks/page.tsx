@@ -3,10 +3,14 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { doctors } from "@/data/doctors";
 
 
 export default function NetworkPage() {
+  const { data: session } = useSession();
+  const router = useRouter();
   return (
     <div className="bg-white">
 
@@ -49,9 +53,10 @@ export default function NetworkPage() {
       </section>
 
       {/* ================= DOCTOR CARDS ================= */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-24">
+      {session ? (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-24">
 
-        {doctors.map((doctor, index) => (
+          {doctors.map((doctor, index) => (
           <motion.div
             key={index}
             initial={{ opacity: 0, y: 40 }}
@@ -131,9 +136,29 @@ export default function NetworkPage() {
             </div>
 
           </motion.div>
-        ))}
+          ))}
 
-      </div>
+        </div>
+      ) : (
+        <div className="max-w-4xl mx-auto px-6 py-20 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-3xl shadow-xl p-12 border border-gray-200"
+          >
+            <h2 className="text-3xl font-bold mb-4">Medical Network</h2>
+            <p className="text-xl text-gray-600 mb-8">Please login to view our medical network and specialist doctors</p>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => router.push(`/login?callbackUrl=${encodeURIComponent("/networks")}`)}
+              className="px-10 py-4 bg-black text-white rounded-full hover:bg-[var(--color-primary)] transition font-semibold cursor-pointer shadow-lg"
+            >
+              Please Login
+            </motion.button>
+          </motion.div>
+        </div>
+      )}
 
 
       {/* ================= FINAL CTA ================= */}
