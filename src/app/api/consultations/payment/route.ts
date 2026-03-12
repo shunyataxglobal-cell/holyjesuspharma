@@ -13,13 +13,68 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-      return NextResponse.json({ error: 'Razorpay credentials not configured' }, { status: 500 });
+    // Debug: Log environment variable status (without exposing secrets)
+    const keyIdExists = !!process.env.RAZORPAY_KEY_ID;
+    const keySecretExists = !!process.env.RAZORPAY_KEY_SECRET;
+    const keyIdPreview = process.env.RAZORPAY_KEY_ID ? `${process.env.RAZORPAY_KEY_ID.substring(0, 12)}...` : 'missing';
+    const keySecretLength = process.env.RAZORPAY_KEY_SECRET?.length || 0;
+
+    console.log('Razorpay credentials check:', {
+      keyIdExists,
+      keySecretExists,
+      keyIdPreview,
+      keySecretLength,
+      nodeEnv: process.env.NODE_ENV,
+    });
+
+    if (!keyIdExists || !keySecretExists) {
+      console.error('Razorpay credentials missing:', {
+        hasKeyId: keyIdExists,
+        hasKeySecret: keySecretExists,
+        hint: 'Make sure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are in .env.local file in the root directory'
+      });
+      return NextResponse.json({ 
+        error: 'Razorpay credentials not configured',
+        hint: 'Please check your .env.local file and restart the server'
+      }, { status: 500 });
+    }
+
+    // Validate credential format
+    const keyId = process.env.RAZORPAY_KEY_ID?.trim() || '';
+    const keySecret = process.env.RAZORPAY_KEY_SECRET?.trim() || '';
+    
+    if (!keyId) {
+      return NextResponse.json({ 
+        error: 'RAZORPAY_KEY_ID is empty. Please check your .env.local file.' 
+      }, { status: 500 });
+    }
+
+    if (!keySecret) {
+      return NextResponse.json({ 
+        error: 'RAZORPAY_KEY_SECRET is empty. Please check your .env.local file.' 
+      }, { status: 500 });
+    }
+    
+    if (!keyId.startsWith('rzp_test_') && !keyId.startsWith('rzp_live_')) {
+      console.error('Invalid Razorpay Key ID format:', keyId.substring(0, 10) + '...');
+      return NextResponse.json({ 
+        error: 'Invalid Razorpay Key ID format. Must start with rzp_test_ or rzp_live_',
+        received: keyId.substring(0, 15) + '...'
+      }, { status: 500 });
+    }
+
+    if (keySecret.length < 20) {
+      console.error('Razorpay Key Secret appears incomplete. Length:', keySecret.length);
+      return NextResponse.json({ 
+        error: 'Razorpay Key Secret appears incomplete. Please check your .env.local file.',
+        hint: 'Razorpay secrets are typically 32 characters long. Current length: ' + keySecret.length,
+        action: 'Please verify your complete secret key from Razorpay dashboard'
+      }, { status: 500 });
     }
 
     const razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
+      key_id: keyId,
+      key_secret: keySecret,
     });
 
     await connectDB();
@@ -37,26 +92,55 @@ export async function POST(request: NextRequest) {
     const consultationFee = consultation.consultationFee || 500;
     const amount = Math.round(consultationFee * 100);
 
-    const rzpOrder = await razorpay.orders.create({
-      amount,
-      currency: 'INR',
-      receipt: `consultation_${consultationId}_${Date.now()}`,
-    });
+    if (amount < 100) {
+      return NextResponse.json({ error: 'Amount must be at least ₹1 (100 paise)' }, { status: 400 });
+    }
 
-    await Consultation.findByIdAndUpdate(consultationId, {
-      razorpayOrderId: rzpOrder.id,
-      assignedDoctor: selectedDoctorId,
-      status: 'pending',
-    });
+    try {
+      const receiptId = `cons_${consultationId.toString().substring(18)}_${Date.now().toString().slice(-8)}`;
+      const rzpOrder = await razorpay.orders.create({
+        amount,
+        currency: 'INR',
+        receipt: receiptId.substring(0, 40),
+      });
 
-    return NextResponse.json({
-      success: true,
-      razorpayOrder: rzpOrder,
-      keyId: process.env.RAZORPAY_KEY_ID,
-    });
-  } catch (error) {
+      await Consultation.findByIdAndUpdate(consultationId, {
+        razorpayOrderId: rzpOrder.id,
+        assignedDoctor: selectedDoctorId,
+        status: 'pending',
+      });
+
+      return NextResponse.json({
+        success: true,
+        razorpayOrder: rzpOrder,
+        keyId: process.env.RAZORPAY_KEY_ID,
+      });
+    } catch (rzpError: any) {
+      console.error('Razorpay API error:', {
+        statusCode: rzpError.statusCode,
+        error: rzpError.error,
+        message: rzpError.message,
+        keyId: process.env.RAZORPAY_KEY_ID ? `${process.env.RAZORPAY_KEY_ID.substring(0, 10)}...` : 'missing',
+      });
+      
+      if (rzpError.statusCode === 401) {
+        return NextResponse.json({ 
+          error: 'Razorpay authentication failed. Please check your API credentials in .env file.',
+          details: 'Make sure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are correct test credentials'
+        }, { status: 500 });
+      }
+      
+      return NextResponse.json({ 
+        error: rzpError.error?.description || 'Failed to create payment order',
+        details: rzpError.error
+      }, { status: 500 });
+    }
+  } catch (error: any) {
     console.error('Consultation payment error:', error);
-    return NextResponse.json({ error: 'Failed to create payment order' }, { status: 500 });
+    return NextResponse.json({ 
+      error: error.message || 'Failed to create payment order',
+      details: error
+    }, { status: 500 });
   }
 }
 

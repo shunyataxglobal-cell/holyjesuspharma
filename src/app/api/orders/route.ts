@@ -28,10 +28,11 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     
     // Create razorpay order first
+    const receiptId = `ord_${Date.now().toString().slice(-10)}`;
     const rzpOrder = await razorpay.orders.create({
       amount: Math.round(data.total * 100),
       currency: "INR",
-      receipt: `order_rcptid_${Date.now()}`
+      receipt: receiptId.substring(0, 40)
     });
 
     const newOrder = await Order.create({
