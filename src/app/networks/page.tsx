@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 interface Doctor {
+  _id?: string;
   name: string;
   designation: string;
   hospital: string;
@@ -27,12 +28,15 @@ export default function NetworkPage() {
     fetch("/api/doctors")
       .then((res) => res.json())
       .then((data) => {
+        console.log('Fetched doctors:', data.doctors?.length || 0);
         if (data.doctors && data.doctors.length > 0) {
           setDoctors(data.doctors);
+          console.log('Set doctors count:', data.doctors.length);
         }
         setLoading(false);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Error fetching doctors:', err);
         setLoading(false);
       });
   }, []);
@@ -92,11 +96,11 @@ export default function NetworkPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-24">
               {doctors.map((doctor: Doctor, index: number) => (
             <motion.div
-              key={index}
+              key={doctor._id || index}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              viewport={{ once: false, margin: "-100px" }}
               className="bg-white rounded-3xl shadow-2xl overflow-hidden"
             >
 
@@ -104,12 +108,15 @@ export default function NetworkPage() {
             <div className="grid md:grid-cols-3">
 
               {/* IMAGE */}
-              <div className="relative h-[400px] ">
+              <div className="relative h-[400px] w-full">
                 <Image
-                  src={doctor.image}
+                  src={doctor.image || '/images/doctor-placeholder.png'}
                   alt={doctor.name}
                   fill
                   className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  priority={index < 3}
+                  unoptimized={doctor.image?.startsWith('http')}
                 />
               </div>
 
