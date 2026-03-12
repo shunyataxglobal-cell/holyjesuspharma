@@ -101,8 +101,5 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
   },
   secret: process.env.NEXTAUTH_SECRET,
-  // Prevent redirect loops
-  useSecureCookies: process.env.NODE_ENV === "production",
-  trustHost: true,
 };
 
