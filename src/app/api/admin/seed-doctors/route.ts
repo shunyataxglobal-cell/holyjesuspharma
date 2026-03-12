@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import connectDB from '@/lib/db';
 import Doctor from '@/models/Doctor';
-import { doctors } from '@/data/doctors';
+// Doctors data is now managed through the database
+// Use the admin panel to add doctors instead
+const doctors: any[] = [];
 
 export async function POST(request: NextRequest) {
   try {
